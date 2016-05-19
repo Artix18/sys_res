@@ -88,3 +88,38 @@ module Th: S = struct
   let run e = e ()
 end
 
+module Proc: S = struct
+	type 'a process = (unit -> 'a)
+	
+	type 'a in_port = in_channel
+	type 'a out_port = out_channel
+	type 'a channel = 'a in_port * 'a out_port
+	
+	let new_channel () =
+		let o, i = pipe () in
+			in_channel_of_descr o, out_channel_of_descr i
+	
+	let put v c () =
+		Marshal.to_channel c v []
+	
+	let rec get c () =
+		Marshal.from_channel c
+	
+	let doco l () =
+		let rec aux pids = function
+			| [] -> List.iter (fun pid -> ignore (waitpid [] pid)) pids
+			| f :: q ->
+				match fork () with
+				| 0 -> f ()
+				| pid -> aux (pid :: pids) q
+		in aux [] l
+	
+	let return v = (fun () -> v)
+	
+	let bind e e' () =
+		let v = e () in
+		e' v ()
+	
+	let run e = e ()
+end
+
