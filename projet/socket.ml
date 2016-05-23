@@ -99,7 +99,7 @@ module Server: S = struct
 		let ic, oc = new_channel () in
 			let sock = init_server_for_client_collecting ()
 				let rec aux i =
-					if i > 10 then
+					if i < 10 then
 						begin
 						let (s, _) = Unix.accept sock in
 							let in_chan  = Unix.in_channel_of_descr s
