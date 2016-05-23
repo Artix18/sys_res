@@ -71,7 +71,15 @@ module Server: S = struct
 		Marshal.from_channel c
 
 	let doco l () = 
-		List.iter (fun p -> (Marshal.to_channel (new_channel()) p [Marshal.Closures])) l
+		let n = List.length l in
+		
+		let mesClients = List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (fst chan) p [Marshal.Closures]; chan::lis) [] l;
+		
+		let nbMorts = ref 0 in 
+		while (!nbMorts <> n) do
+			nbMorts := 0;
+			leur demander à chacun ici
+		done
 
 	let bind e e' () = 
 		let v = e () in 
