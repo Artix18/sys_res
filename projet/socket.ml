@@ -71,6 +71,7 @@ module Server: S = struct
 		Marshal.from_channel c
 
 	let doco l () = 
+		List.iter (fun p -> (Marshal.to_channel (new_channel()) p [Marshal.Closures])) l
 
 	let bind e e' () = 
 		let v = e () in 
@@ -190,7 +191,7 @@ module Client: S = struct
 				let in_chan, out_chan = open_connection sockaddr in
 
 					let wait_my_function () =
-						let fu = Marshal.JENESAISPAS in_chan in	
+						let fu = Marshal.from_channel in_chan in	
 							fu in_chan out_chan;
 							shutdown_connection in_chan
 				
