@@ -96,8 +96,8 @@ module Proc: S = struct
 	type 'a channel = 'a in_port * 'a out_port
 	
 	let new_channel () =
-		let o, i = pipe () in
-			in_channel_of_descr o, out_channel_of_descr i
+		let a, b = pipe () in
+			in_channel_of_descr a, out_channel_of_descr b
 	
 	let put v c () =
 		Marshal.to_channel c v []
@@ -107,7 +107,7 @@ module Proc: S = struct
 	
 	let doco l () =
 		let rec aux pids = function
-			| [] -> List.iter (fun pid -> ignore (waitpid [] pid)) pids
+			| [] -> List.iter (fun pid -> waitpid [] pid; ()) pids
 			| f :: q ->
 				match fork () with
 				| 0 -> f ()
@@ -123,3 +123,68 @@ module Proc: S = struct
 	let run e = e ()
 end
 
+module Seq: S = struct
+	type 'a process = (unit -> 'a)
+	
+	type 'a channel = 'a Queue.t
+	type 'a in_port = 'a channel
+	type 'a out_port = 'a channel
+	
+	let new_channel () =
+		let q = Queue.create () in
+		q,q
+	
+	let put v c conti =
+		Queue.push v c;
+		conti ()
+	
+	let rec get c conti =
+	   try
+          let v = Queue.pop c in
+          conti v
+       with Queue.Empty ->
+          Queue.push (fun () -> get c conti) todo
+	
+	let doco l conti =
+		let pasFini = Queue.create () in
+		List.iter (fun p -> Queue.push p pasFini) l;
+		while (Queue.length pasFini) <> 0 do
+			let p = Queue.pop pasFini in
+			let tmp = Queue.create () in
+			while (Queue.length todo) <> 0 do
+				let a = Queue.pop todo in
+				Queue.push a tmp
+			done;
+			while (Queue.length tmp) <> 0 do
+				let a = Queue.pop tmp in
+				a ()
+			done;
+			while (Queue.length todo) <> 0 do
+				let a = Queue.pop todo in
+				Queue.push a tmp
+			done;
+			p ();
+			while (Queue.length todo) <> 0 do
+				let a = Queue.pop todo in
+				Queue.push a pasFini
+			done;
+			while (Queue.length tmp) <> 0 do
+				let a = Queue.pop tmp in
+				Queue.push a todo
+			done;
+		done;
+		conti ()
+	
+	let return v = (fun () -> v)
+	
+	let bind e e' () =
+		let v = e () in
+		e' v ()
+	
+	let run e = 
+		let r = ref None in
+		while (Queue.length todo) <> 0 do
+			if (!r) <> None then ()
+		done;
+		assert(false)
+end
