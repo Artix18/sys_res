@@ -73,7 +73,7 @@ module Server: S = struct
 	let doco l () = 
 		let n = List.length l in
 		
-		let mesClients = List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (fst chan) p [Marshal.Closures]; chan::lis) [] l;
+		let mesClients = List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (snd chan) p [Marshal.Closures]; chan::lis) [] l;
 		
 		let nbMorts = ref 0 in 
 		while (!nbMorts <> n) do
