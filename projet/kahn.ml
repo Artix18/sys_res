@@ -146,7 +146,16 @@ module Seq: S = struct
        with Queue.Empty ->
           Queue.push (fun () -> get c conti) todo
 	
-	let doco l conti = 
+	let doco l = 
+		fun conti ->
+			let nbRest = ref (List.length l) in (* nbRest est partagé *)
+			let aux () =
+				decr nbRest;
+				if !nbRest = 0 then (*fini*)
+					conti ()
+			in
+			List.iter (fun p -> Queue.push (fun () -> p aux) todo) l
+		(*let aux () = () in
 		let pasFini = Queue.create () in
 		List.iter (fun p -> Queue.push p pasFini) l;
 		while (Queue.length pasFini) <> 0 do
@@ -158,13 +167,13 @@ module Seq: S = struct
 			done;
 			while (Queue.length tmp) <> 0 do
 				let a = Queue.pop tmp in
-				a ()
+				a (aux)
 			done;
 			while (Queue.length todo) <> 0 do
 				let a = Queue.pop todo in
 				Queue.push a tmp
 			done;
-			p ();
+			p (aux);
 			while (Queue.length todo) <> 0 do
 				let a = Queue.pop todo in
 				Queue.push a pasFini
@@ -174,13 +183,13 @@ module Seq: S = struct
 				Queue.push a todo
 			done;
 		done;
-		conti ()
+		conti () *) (*mauvais type à cause de pasFini mais de toute façon idee plus simple*)
 	
 	let return v conti = 
 		Queue.push (fun () -> conti v) todo
 	
 	let bind e e' conti =
-		Queue.push (fun () -> e' (fun x -> e x conti)) todo
+		Queue.push (fun () -> e (fun x -> e' x conti)) todo
 	
 	let run e = 
 		let r = ref None in
