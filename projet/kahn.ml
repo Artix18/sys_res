@@ -96,8 +96,8 @@ module Proc: S = struct
 	type 'a channel = 'a in_port * 'a out_port
 	
 	let new_channel () =
-		let a, b = pipe () in
-			in_channel_of_descr a, out_channel_of_descr b
+		let a, b = Unix.pipe () in
+			Unix.in_channel_of_descr a, Unix.out_channel_of_descr b
 	
 	let put v c () =
 		Marshal.to_channel c v []
@@ -107,9 +107,9 @@ module Proc: S = struct
 	
 	let doco l () =
 		let rec aux pids = function
-			| [] -> List.iter (fun pid -> waitpid [] pid; ()) pids
+			| [] -> List.iter (fun pid -> Unix.waitpid [] pid; ()) pids
 			| f :: q ->
-				match fork () with
+				match Unix.fork () with
 				| 0 -> f ()
 				| pid -> aux (pid :: pids) q
 		in aux [] l
@@ -124,7 +124,8 @@ module Proc: S = struct
 end
 
 module Seq: S = struct
-	type 'a process = (unit -> 'a)
+	type 'a process = ('a -> unit) -> unit
+	let todo : (unit -> unit) Queue.t = Queue.create ()
 	
 	type 'a channel = 'a Queue.t
 	type 'a in_port = 'a channel
@@ -145,7 +146,7 @@ module Seq: S = struct
        with Queue.Empty ->
           Queue.push (fun () -> get c conti) todo
 	
-	let doco l conti =
+	let doco l conti = 
 		let pasFini = Queue.create () in
 		List.iter (fun p -> Queue.push p pasFini) l;
 		while (Queue.length pasFini) <> 0 do
@@ -175,11 +176,11 @@ module Seq: S = struct
 		done;
 		conti ()
 	
-	let return v = (fun () -> v)
+	let return v conti = 
+		Queue.push (fun () -> conti v) todo
 	
-	let bind e e' () =
-		let v = e () in
-		e' v ()
+	let bind e e' conti =
+		Queue.push (fun () -> e' (fun x -> e x conti)) todo
 	
 	let run e = 
 		let r = ref None in
