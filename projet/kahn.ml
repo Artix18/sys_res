@@ -407,8 +407,7 @@ module Client: S = struct
 				try (Unix.gethostbyname server).Unix.h_addr_list.(0)
 				with Not_found ->
 				(
-					Printf.eprintf ("%s : Unknown server\n", server);
-					exit -1
+					failwith "Unknown server"
 				)
 		   )
 			in 
@@ -427,7 +426,7 @@ module Client: S = struct
 					wait_my_function ();
 				)
 			with Failure ("int_of_string") -> Printf.eprintf "bad port number";
-			                                  exit -1
+												failwith "int_of_string"
 			                                  )
 end
 
