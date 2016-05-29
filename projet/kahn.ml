@@ -379,8 +379,8 @@ module Client: S = struct
 		Marshal.from_channel c
 
 	let doco l () = 
-		let pids = List.map (fun f -> match Unix.fork () with | 0 -> f () | pid -> pid) l in
-		List.iter (fun pid -> Unix.waitpid [] pid; ()) pids
+		let pids = List.map (fun f -> match Unix.fork () with | 0 -> f (); (-1) | pid -> pid) l in
+		List.iter (fun pid -> if pid = (-1) then () else (Unix.waitpid [] pid; ())) pids
 
 	let bind e e' () = 
 		let v = e () in 
