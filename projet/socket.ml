@@ -78,7 +78,8 @@ module Server: S = struct
 		let nbMorts = ref 0 in 
 		while (!nbMorts <> n) do
 			nbMorts := 0;
-			leur demander à chacun ici
+			assert(false)
+			(*leur demander à chacun ici*)
 		done
 
 	let bind e e' () = 

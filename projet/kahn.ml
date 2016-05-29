@@ -280,13 +280,14 @@ module Server: S = struct
 	let doco l () = 
 		let n = List.length l in
 		
-		let mesClients = List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (snd chan) p [Marshal.Closures]; chan::lis) [] l;
+		let mesClients =
+		List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (snd chan) p [Marshal.Closures]; chan::lis) [] l in
 		
 		let nbMorts = ref 0 in 
 		while (!nbMorts <> n) do
 			nbMorts := 0;
-			leur demander à chacun ici
-		done
+		done;
+		assert(false)
 
 	let bind e e' () = 
 		let v = e () in 
@@ -301,7 +302,7 @@ module Server: S = struct
 		let my_addr = get_my_addr () in
 		let rec aux port = 
 			try
-				let sockaddr = (Unix.ADDR_INET (my_addr, port))
+				let sockaddr = (Unix.ADDR_INET (my_addr, port)) in
 				let domain  = Unix.domain_of_sockaddr sockaddr in
 				let sock    = Unix.socket domain Unix.SOCK_STREAM 0 in
 					Unix.bind sock sockaddr;
@@ -313,7 +314,7 @@ module Server: S = struct
 
 	let collect_clients () =
 		let ic, oc = new_channel () in
-			let sock = init_server_for_client_collecting ()
+			let sock = init_server_for_client_collecting () in
 				let rec aux i =
 					if i < 10 then
 						begin
@@ -392,14 +393,17 @@ module Client: S = struct
 	let wait_server_instruction () = 
 		let server = "IP IPI PI PIPI" in
 		let port = 541073 in
-		let server_addr =
+		let server_addr = (
 			try Unix.inet_addr_of_string server
 			with Failure ("inet_addr_of_string") ->
 				try (Unix.gethostbyname server).Unix.h_addr_list.(0)
 				with Not_found ->
 					Printf.eprintf ("%s : Unknown server\n", server);
 					exit -1
-			in try
+		   )
+			in 
+			(
+			try (
 				let sockaddr = (Unix.ADDR_INET (server_addr, port)) in
 				let domain  = Unix.domain_of_sockaddr sockaddr in
 				let sock    = Unix.socket domain Unix.SOCK_STREAM 0 in
@@ -409,8 +413,11 @@ module Client: S = struct
 						let fu = Marshal.from_channel in_chan in	
 							fu in_chan out_chan;
 							shutdown_connection in_chan
-				
+					in
+					assert(false)
+				)
 			with Failure ("int_of_string") -> Printf.eprintf "bad port number";
 			                                  exit -1
+			                                  )
 end
 
