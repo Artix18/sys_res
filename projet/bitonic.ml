@@ -33,7 +33,8 @@ module Bitonic (K : Kahn.S) = struct
   	done
   
   let rec bitonic_merge sens beg sz = 
-  	if sz = 1 then ()
+  (*print_string "debut";*)
+  	if sz = 1 then () (*print_string "fin"*)
   	else
   	(
   		bitonic_compare sens beg sz;
@@ -41,22 +42,34 @@ module Bitonic (K : Kahn.S) = struct
   		let droite = bitonic_merge sens (beg+(sz/2)) (sz-(sz/2)) in
   		(*Array.append gauche droite*)
   		()
+  		(*print_string "fin"*)
   	)
 
 	(* todo : paralleliser ici, a priori je crois qu'il faut juste doco *)
   let rec bitonic_sort sens beg sz = 
   	let n = sz in
-  	if n <= 1 then K.doco []
+  	if n <= 1 then ()
   	else
   	(
-  		let gauche_tc : (unit K.process) = Obj.magic (fun () -> bitonic_sort true beg (n/2); ()) in
-  		let droite_tc : (unit K.process) = Obj.magic (fun () -> bitonic_sort false (beg+(n/2)) (n-(n/2)); ()) in
+  		let gauche_tc : (unit K.process) = delay (fun () -> bitonic_sort true beg (n/2); ()) () in
+  		let droite_tc : (unit K.process) = delay (fun () -> bitonic_sort false (beg+(n/2)) (n-(n/2)); ()) () in
+  		let bidule : (unit K.process) = delay (fun () -> bitonic_merge sens beg sz; ()) () in
+  		
+  		K.run (K.doco [gauche_tc; droite_tc]);
+  		K.run bidule;
   		
   		(*K.run gauche_tc;
   		K.run droite_tc;*)
-  		K.doco [gauche_tc; droite_tc];
-  		let bidule : (unit K.process) = Obj.magic (fun () -> bitonic_merge sens beg sz; ()) in
-  		K.doco [bidule];
+  		(*print_string "la";
+  		
+  		let a = K.doco [bidule ;] in
+  		print_string "ici";
+  		K.doco []*)
+  		
+  		(*K.run (K.bind (delay (fun () -> K.doco[gauche_tc ; droite_tc]) ()) (fun a -> bidule));*)
+  		(*K.run bidule;*)
+  		
+  		()
   	)
 
   (*
@@ -76,7 +89,7 @@ module Bitonic (K : Kahn.S) = struct
 
   let main : unit K.process =
     (delay K.new_channel ()) >>=
-    (fun (q_in, q_out) -> bitonic_sort true 0 (Array.length tab); output())
+    (fun (q_in, q_out) -> bitonic_sort true 0 (Array.length tab); output ())
 
 end
 
