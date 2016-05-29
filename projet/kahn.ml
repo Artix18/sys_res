@@ -135,6 +135,11 @@ module Seq: S = struct
 		let q = Queue.create () in
 		q,q
 	
+	let exec_tout () = 
+		while not (Queue.is_empty todo) do
+			(Queue.pop todo) ()
+		done
+	
 	let put v c conti =
 		Queue.push v c;
 		conti ()
@@ -146,8 +151,7 @@ module Seq: S = struct
        with Queue.Empty ->
           Queue.push (fun () -> get c conti) todo
 	
-	let doco l = 
-		fun conti ->
+	let doco l conti = 
 			let nbRest = ref (List.length l) in (* nbRest est partagé *)
 			let aux () =
 				decr nbRest;
@@ -192,9 +196,11 @@ module Seq: S = struct
 		Queue.push (fun () -> e (fun x -> e' x conti)) todo
 	
 	let run e = 
-		let r = ref None in
-		while (Queue.length todo) <> 0 do
-			if (!r) <> None then ()
-		done;
-		assert(false)
+		let r = ref None in (*il faut juste que e soit capable de modif r*)
+		let modif_rval = (fun x -> r := Some x) in
+		let proc () = e modif_rval in
+		Queue.push proc todo;
+		exec_tout ();
+		match !r with
+			| Some x -> x
 end
