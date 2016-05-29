@@ -262,13 +262,14 @@ module Server: S = struct
 	type 'a in_port  = in_channel
 	type 'a out_port = out_channel
 	type 'a channel  = ('a in_port * 'a out_port)
-	let clients = ref channel list
+	
+	let clients : 'a channel list ref = ref []
 
 	let return v = (fun () -> v)
 
 	let new_channel () =
 		match !clients with 
-			| []   -> raise "Not enough client"
+			| []   -> failwith "Not enough client"
 			| a::l -> begin clients := l; a end
 	
 	let put v c () =
@@ -280,13 +281,14 @@ module Server: S = struct
 	let doco l () = 
 		let rec dispatch l =
 			match l with
-				| [a] | [] -> ()
-				| (_, cout)::(cin, cout_)::l -> put (get (cout)) cout (); dispatch ((cin, cout_)::l)
+				| [_] | [] -> ()
+				| (_, cout)::(cin, cout_)::l -> put (get (cin)) cout (); dispatch ((cin, cout_)::l)
 			in
 		let n = List.length l in
 		
 		let mesClients =
-		List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (snd chan) p [Marshal.Closures]; chan::lis) [] l in
+		List.fold_left (fun lis p -> let chan = new_channel() in Marshal.to_channel (snd chan) p [Marshal.Closures]; chan::lis) [] l
+		in
 		
 		let nbMorts = ref 0 in 
 		while (!nbMorts <> n) do
@@ -404,8 +406,10 @@ module Client: S = struct
 			with Failure ("inet_addr_of_string") ->
 				try (Unix.gethostbyname server).Unix.h_addr_list.(0)
 				with Not_found ->
+				(
 					Printf.eprintf ("%s : Unknown server\n", server);
 					exit -1
+				)
 		   )
 			in 
 			(
