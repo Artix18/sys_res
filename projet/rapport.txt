@@ -1,5 +1,5 @@
 Rapport du projet sur les Réseaux de Kahn pour le cours de Système et Réseaux
-Paul Lenczner et Jules Pondard
+Jules Pondard et Paul Lenczner 
 
 Sujet : il s'agissait d'implémenter l'interface des réseaux de Kahn par plusieurs approches : 
 avec des processus, de manière séquentielle, et en réseau.
@@ -24,7 +24,7 @@ il semble nécessaire d'implémenter une liste des tâches à effectuer. C'est a
 exécuter un processus p. Mais pour cela, elle devra d'abord exécuter toute la file des choses à faire.
 Les continuations se trouvent être assez utiles dans ce cas précis, mais pas vraiment nécessaire :
 si l'on veut mettre le processus dans la file, alors il faut qu'il soit capable d'indiquer à notre fonction ce qu'il renvoie.
-Et pour ce faire, une continuation peut modifier une référence sur la valeur de retour.
+Et pour se faire, une continuation peut modifier une référence sur la valeur de retour.
 De même, le principe des continuations est utile dans le cas des doco, puisqu'il permet de maintenir un compteur sur combien
 des processus de la liste sont terminés. Une autre manière de faire (que nous avions d'abord implémenter)
 était dans le doco de boucler sur la liste des processus à faire tourner puis tout tenter d'exécuter en utilisant
@@ -32,7 +32,17 @@ une file intermédiaire.
 
 3) L'implémentation par les réseaux
 
-Décrire les deux parties ici
+Pour cette partie nous avons tenté deux approches, la première est très primitive puisque pour son fonctionnement, seul un code serveur suffit.
+Lors de la création d'un nouveau cannal de communication, nous créons simplement un nouveau serveur localement. Nous récupérons alors l'entrée et la sortie de ce serveur.
+La partie doco est elle aussi assez élémentaire puisque nous créons une nouvelle instance du programme avec la fonction fork.
+Nous restons alors très proche d'une implémentation par processus, à ceci près que notre moyen de communication est ici la socket.
+Néanmoins, la simplicité conceptuelle de cette implémentation va de paire avec la simplicité du debuggage de notre exemple, ce qui nous aide grandement pour l'élaboration de notre deuxième implémentation.
+
+Pour cette deuxième implémentation, nous allons ici utiliser un jeu de client-serveur de manière plus régulière que l'implémentation décrite ci-dessus.
+Cette implémentation suppose que nous connaissons à l'avance le nombre de clients nécessaires, ce nombre est en fait le nombre de processus que nous devrons paralleliser dans le premier doco. D'un autre côté, le client se connecte au serveur et se met en attente de la prochaine fonction à exécuter.
+Une fois que cette étape est terminée le serveur peut répartir les fonctions sur chacun des clients à l'aide du Module Marshall. Si jamais un client doit recréer des instances à paralléliser, il se comportera alors comme un serveur de notre première implémentation.
+
+Remarquez que nous aurions pu répartir les choses de manière plus élégante, en dédiant à un file d'éxecution (thread partie serveur) une écoute d'éventuels nouveaux clients. Par ailleurs, dans le cas où le nombre de clients se trouve insuffisant, nous aurions pu demander aux clients déjà existants de créer un autre fil d'éxecution pour répartir au mieux les charges computationnelles. Une optimisation suplémentaire aurait été de regarder la charge libre du processeur de chaque client après quelques éxecutions de leur processus respectif afin de réorganiser plus finement les fonctions plus gourmandes sur les clients plus puissants. 
 
 4) Les exemples
 
@@ -48,5 +58,5 @@ de pipe... A la manière du tri fusion, on peut trier les deux moitiés d'un tab
 
 5) Davantage d'exemples et de temps
 
-On aurait aimé tester réellement la version serveur, mais aussi effectuer un vrai comparatif du temps d'exécution entre les différentes
+On aurait aimé tester d'avantage la version serveur, mais aussi effectuer un vrai comparatif du temps d'exécution entre les différentes
 versions. Enfin, il aurait été intéressant d'étudier un autre exemple que celui fourni, nécessitant des pipes.
