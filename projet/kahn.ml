@@ -292,7 +292,7 @@ module Server: S = struct
 		while (!nbMorts <> n) do
 			nbMorts := 0;
 			dispatch mesClients;
-		done;
+		done
 
 
 	let bind e e' () = 

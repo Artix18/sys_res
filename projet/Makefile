@@ -5,6 +5,7 @@ TARGET=native
 
 example:
 	$(OCAMLBUILD) example.$(TARGET)
+	$(OCAMLBUILD) bitonic.$(TARGET)
 
 
 clean:

@@ -3,11 +3,12 @@ module Bitonic (K : Kahn.S) = struct
   module Lib = Kahn.Lib(K)
   open Lib
 
-  let integers (qo : int K.out_port) : unit K.process =
+  (*let integers (qo : int K.out_port) : unit K.process =
     let rec loop n =
       (K.put n qo) >>= (fun () -> loop (n + 1))
     in
     loop 2
+    *)
 
   let read_tab () =
   	let n = read_int() in
@@ -17,7 +18,7 @@ module Bitonic (K : Kahn.S) = struct
   	done;
   	tab
   
-  let tab = read_tab ()
+  let glb_tab = read_tab ()
 
 	(* todo : paralleliser ici, a priori je crois qu'il faut juste doco *)
   let rec bitonic_sort sens tab = 
@@ -25,9 +26,11 @@ module Bitonic (K : Kahn.S) = struct
   	if n <= 1 then tab
   	else
   	(
-  		let gauche = bitonic_sort true (Array.sub tab 0 (n/2)) in
-  		let droite = bitonic_sort false (Array.sub (n/2) (n-1)) in
-  		bitonic_merge sens (Array.append gauche droite)
+  		let gauche_tc = (fun () -> bitonic_sort true (Array.sub tab 0 (n/2))) in
+  		let droite_tc = (fun () -> bitonic_sort false (Array.sub tab (n/2) (n-1))) in
+  		
+  		K.doco [gauche_tc; droite_tc];
+  		bitonic_merge sens tab (*normalement ça n'a pas recopie les tab donc ok*)
   	)
   
   let bitonic_compare sens tab = 
@@ -49,19 +52,26 @@ module Bitonic (K : Kahn.S) = struct
   	(
   		bitonic_compare sens tab;
   		let gauche = bitonic_merge sens (Array.sub tab 0 (n/2)) in
-  		let droite = bitonic_merge sens (Array.sub (n/2) (n-1)) in
+  		let droite = bitonic_merge sens (Array.sub tab (n/2) (n-1)) in
   		Array.append gauche droite
   	)
 
+  (*
   let output (qi : int K.in_port) : unit K.process =
     let rec loop () =
       (K.get qi) >>= (fun v -> Format.printf "%d@." v; loop ())
     in
-    loop ()
+    loop ()*)
+    
+  let output () = 
+  	let n = Array.length glb_tab in
+  	for i = 0 to (n-1) do
+  		print_int(tab.(i))
+  	done
 
-  let main : unit K.process =
+  let main : int array K.process =
     (delay K.new_channel ()) >>=
-    (fun (q_in, q_out) -> K.doco [ integers q_out ; output q_in ; ])
+    (fun (q_in, q_out) -> K.doco [ bitonic_sort true glb_tab; output () ; ])
 
 end
 
