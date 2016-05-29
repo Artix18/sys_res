@@ -52,9 +52,9 @@ module Bitonic (K : Kahn.S) = struct
   		let gauche_tc : (unit K.process) = Obj.magic (fun () -> bitonic_sort true beg (n/2); ()) in
   		let droite_tc : (unit K.process) = Obj.magic (fun () -> bitonic_sort false (beg+(n/2)) (n-(n/2)); ()) in
   		
-  		K.run gauche_tc;
-  		K.run droite_tc;
-  		(*K.doco [gauche_tc; droite_tc];*)
+  		(*K.run gauche_tc;
+  		K.run droite_tc;*)
+  		K.doco [gauche_tc; droite_tc];
   		bitonic_merge sens beg sz;
   		K.doco []
   	)
@@ -80,6 +80,6 @@ module Bitonic (K : Kahn.S) = struct
 
 end
 
-module E = Bitonic(Kahn.Th)
+module E = Bitonic(Kahn.Proc)
 
 let () = E.K.run E.main

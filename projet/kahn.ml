@@ -202,6 +202,7 @@ module Seq: S = struct
 		Queue.push proc todo;
 		exec_tout ();
 		match !r with
+			| None -> assert(false)
 			| Some x -> x
 end
 
