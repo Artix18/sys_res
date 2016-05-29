@@ -55,9 +55,8 @@ module Bitonic (K : Kahn.S) = struct
   		(*K.run gauche_tc;
   		K.run droite_tc;*)
   		K.doco [gauche_tc; droite_tc];
-  		let bidule : (unit K.process) = Obj.magic (fun () -> bitonic_merge sens beg sz) in
+  		let bidule : (unit K.process) = Obj.magic (fun () -> bitonic_merge sens beg sz; ()) in
   		K.doco [bidule];
-  		(*K.doco []*)
   	)
 
   (*
