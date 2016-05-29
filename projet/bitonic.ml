@@ -1,3 +1,5 @@
+open Obj
+
 module Bitonic (K : Kahn.S) = struct
   module K = K
   module Lib = Kahn.Lib(K)
@@ -19,19 +21,6 @@ module Bitonic (K : Kahn.S) = struct
   	tab
   
   let glb_tab = read_tab ()
-
-	(* todo : paralleliser ici, a priori je crois qu'il faut juste doco *)
-  let rec bitonic_sort sens tab = 
-  	let n = Array.length tab in
-  	if n <= 1 then tab
-  	else
-  	(
-  		let gauche_tc = (fun () -> bitonic_sort true (Array.sub tab 0 (n/2))) in
-  		let droite_tc = (fun () -> bitonic_sort false (Array.sub tab (n/2) (n-1))) in
-  		
-  		K.doco [gauche_tc; droite_tc];
-  		bitonic_merge sens tab (*normalement ça n'a pas recopie les tab donc ok*)
-  	)
   
   let bitonic_compare sens tab = 
   	let dist = (Array.length tab) / 2 in
@@ -44,7 +33,7 @@ module Bitonic (K : Kahn.S) = struct
   		)
   	done
   
-  let bitonic_merge sens tab = 
+  let rec bitonic_merge sens tab = 
   	let n = Array.length tab in
   	if n = 1 then
   		tab
@@ -54,6 +43,20 @@ module Bitonic (K : Kahn.S) = struct
   		let gauche = bitonic_merge sens (Array.sub tab 0 (n/2)) in
   		let droite = bitonic_merge sens (Array.sub tab (n/2) (n-1)) in
   		Array.append gauche droite
+  	)
+
+	(* todo : paralleliser ici, a priori je crois qu'il faut juste doco *)
+  let rec bitonic_sort sens tab = 
+  	let n = Array.length tab in
+  	if n <= 1 then K.doco []
+  	else
+  	(
+  		let gauche_tc : (unit K.process) = Obj.magic (fun () -> bitonic_sort true (Array.sub tab 0 (n/2)); ()) in
+  		let droite_tc = Obj.magic (fun () -> bitonic_sort false (Array.sub tab (n/2) (n-1)); ()) in
+  		
+  		K.doco [gauche_tc; droite_tc];
+  		bitonic_merge sens tab (*normalement ça n'a pas recopie les tab donc ok*);
+  		K.doco []
   	)
 
   (*
@@ -66,10 +69,11 @@ module Bitonic (K : Kahn.S) = struct
   let output () = 
   	let n = Array.length glb_tab in
   	for i = 0 to (n-1) do
-  		print_int(tab.(i))
-  	done
+  		print_int(glb_tab.(i))
+  	done;
+  	K.doco []
 
-  let main : int array K.process =
+  let main : unit K.process =
     (delay K.new_channel ()) >>=
     (fun (q_in, q_out) -> K.doco [ bitonic_sort true glb_tab; output () ; ])
 
