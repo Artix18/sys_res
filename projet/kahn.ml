@@ -108,9 +108,9 @@ module Proc: S = struct
 	let doco l () =
 		let rec aux pids = function
 			| [] -> List.iter (fun pid -> Unix.waitpid [] pid; ()) pids
-			| f :: q ->
+			| p :: q ->
 				match Unix.fork () with
-				| 0 -> f ()
+				| 0 -> p ()
 				| pid -> aux (pid :: pids) q
 		in aux [] l
 	

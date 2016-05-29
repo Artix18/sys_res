@@ -1,0 +1,52 @@
+Rapport du projet sur les Réseaux de Kahn pour le cours de Système et Réseaux
+Paul Lenczner et Jules Pondard
+
+Sujet : il s'agissait d'implémenter l'interface des réseaux de Kahn par plusieurs approches : 
+avec des processus, de manière séquentielle, et en réseau.
+Nous pouvions alors tester chacune de nos implémentations sur l'exemple fourni qui compte jusqu'à l'infini,
+et sur un autre exemple que nous avons implanté : le bitonic sort.
+
+Commencer par exposé un petit commentaire partie par partie : 
+
+1) L'implémentation par processus.
+
+L'idée est d'utiliser un pipe et un convertisseur universel, Marshall, pour faire communiquer les processus entre eux. 
+Les processus crées par fork() copient tous les objets déclarés plus haut, d'où la nécessité d'un pipe.
+L'implémentation de cette partie a été pour nous assez naturelle une fois le fonctionnement de Marshall bien compris.
+
+2) L'implémentation séquentielle
+
+Cette partie n'était pas simple, nous sommes partis plusieurs fois dans des idées erronées ou trop complexes.
+La première chose à remarquer est que, lorsque l'on veut exécuter des processus en parallèles de manière séquentielle,
+l'ordre peut poser un problème. En effet, un get peut avoir lieu trop tôt, parce que le put associé est dans le processus qui
+s'exécutera après. C'est ainsi que la fonction "get" doit être capable de reporter son action à plus tard. Ainsi,
+il semble nécessaire d'implémenter une liste des tâches à effectuer. C'est alors la fonction run qui devra se charger de réellement
+exécuter un processus p. Mais pour cela, elle devra d'abord exécuter toute la file des choses à faire.
+Les continuations se trouvent être assez utiles dans ce cas précis, mais pas vraiment nécessaire :
+si l'on veut mettre le processus dans la file, alors il faut qu'il soit capable d'indiquer à notre fonction ce qu'il renvoie.
+Et pour ce faire, une continuation peut modifier une référence sur la valeur de retour.
+De même, le principe des continuations est utile dans le cas des doco, puisqu'il permet de maintenir un compteur sur combien
+des processus de la liste sont terminés. Une autre manière de faire (que nous avions d'abord implémenter)
+était dans le doco de boucler sur la liste des processus à faire tourner puis tout tenter d'exécuter en utilisant
+une file intermédiaire.
+
+3) L'implémentation par les réseaux
+
+Décrire les deux parties ici
+
+4) Les exemples
+
+Le travail sur les exemples après avoir réalisé les différentes implémentations nous a permis de réaliser que nous ne comprenions pas
+tout. Par exemple, notre compréhension du pourquoi, dans l'exemple donné, les paramètres du doco ne sont pas évalués, n'était pas clair.
+Cela venait du fait de notre compréhension imparfaite du jeu entre interface S des processus et implémentation comme des fonctions qui
+donnent lieu à ce que nous avons perçu comme des petites astuces pratiques (bien qu'elles soient assez naturelles : on n'implémente
+pas le renvoie du processus mais ce que fait le processus renvoyé à chaque fois).
+
+Nous avons donc mis du temps à obtenir une implantation non bugée du bitonic sort parallèle (alors qu'il fonctionnait en séquentiel).
+Nous avons choisi le bitonic sort parce qu'il est réputé pour sa vitesse d'exécution en parallèle en pratique, bien qu'il ne nécessite pas du tout
+de pipe... A la manière du tri fusion, on peut trier les deux moitiés d'un tableau en parallèle.
+
+5) Davantage d'exemples et de temps
+
+On aurait aimé tester réellement la version serveur, mais aussi effectuer un vrai comparatif du temps d'exécution entre les différentes
+versions. Enfin, il aurait été intéressant d'étudier un autre exemple que celui fourni, nécessitant des pipes.
