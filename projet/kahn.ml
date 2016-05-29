@@ -278,6 +278,11 @@ module Server: S = struct
 		Marshal.from_channel c
 
 	let doco l () = 
+		let rec dispatch l =
+			match l with
+				| [a] | [] -> ()
+				| (_, cout)::(cin, cout_)::l -> put (get (cout)) cout (); dispatch ((cin, cout_)::l)
+			in
 		let n = List.length l in
 		
 		let mesClients =
@@ -286,8 +291,9 @@ module Server: S = struct
 		let nbMorts = ref 0 in 
 		while (!nbMorts <> n) do
 			nbMorts := 0;
+			dispatch mesClients;
 		done;
-		assert(false)
+
 
 	let bind e e' () = 
 		let v = e () in 
@@ -414,7 +420,7 @@ module Client: S = struct
 							fu in_chan out_chan;
 							shutdown_connection in_chan
 					in
-					assert(false)
+					wait_my_function ();
 				)
 			with Failure ("int_of_string") -> Printf.eprintf "bad port number";
 			                                  exit -1
